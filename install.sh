@@ -22,8 +22,8 @@ rm ${DYNMOTD_CUSTOM_SCRIPTS_PATH}/00_*.sh 2>/dev/null
 
 echo ' + detecting additional OS info'
 # check to see if it's a Raspberry Pi
-cat /etc/os-release | grep -q 'Raspbian'
-if [ $? -eq 0 ]
+
+if grep -q 'Raspbian' /etc/os-release ;
 then
   # if you want to disable it afterwards, just rename the file so that id doesn't have an .sh extension (i.e .sh_disabled)
   cp ./00_raspberry_pi.sh ${DYNMOTD_CUSTOM_SCRIPTS_PATH}/.
@@ -33,7 +33,7 @@ echo '  + checking for cloud provider status'
 # check to see if VM belongs to one of the big 3 CSPs
 # done via checking against https://ipinfo.io/, getting the org and cutting out the asn
 # then checking to see if the metadata server/internal address responds
-IPINFO_ORG=$(curl -s ipinfo.io/org | awk {'first = $1; $1=""; print $0'}|sed 's/^ //g')
+IPINFO_ORG=$(curl -s ipinfo.io/org | awk '{first = $1; $1=""; print $0}'|sed 's/^ //g')
 
 if [[ 'Google LLC' = "${IPINFO_ORG}" && $(curl --max-time 1 --write-out %{http_code} -s --output /dev/null 169.254.169.254) == '200' ]]
 then
@@ -46,6 +46,10 @@ then
   cp ./00_azure.sh ${DYNMOTD_CUSTOM_SCRIPTS_PATH}/.
 fi
 
+echo ' + detecting cockpit'
+if [ -f /run/cockpit/motd ]; then
+	cp ./example/dynmotd.d/99_cockpit.sh ${DYNMOTD_CUSTOM_SCRIPTS_PATH}/.
+fi
 
 echo '+ install complete!'
 ${DYNMOTD_BIN_PATH}/dynmotd

@@ -1,10 +1,10 @@
 # dynmotd
 
-### [CHANGELOG](https://github.com/Neutrollized/dynmotd/blob/master/CHANGELOG.md)
+### [CHANGELOG](https://github.com/deild/dynmotd/blob/master/CHANGELOG.md)
 
 Dynamic MOTD for RHEL/Debian-based Linux distros
 
-I got the template for this off someone's repo many years ago, long before I got a GitHub account.  It was initially created for RHEL6, but I've made changes to it for RHEL7 as well as added my own banner on top.  I tried looking for the original so I could do a proper fork and give credit where credit is due, but there are now so many dynmotd repos on GitHub that it's honestly hard to figure out who I got it from.  In any case, you have my thanks and here's a *hat tip* to you, stranger.
+I got the template for this from [Neutrollized/dynmotd](https://github.com/Neutrollized/dynmotd).
 
 
 ## Requirements:
@@ -20,24 +20,49 @@ For some of the data to be pulled and filtered successfully, make sure you have 
 
 You can run the `install.sh` script as root/with sudo or if you prefer manually:
 
-```
- 1.   vi /etc/ssh/sshd_config  (this is optional; if you have `PrintMotd yes`, then you'll get the static motd as well as the `dynmotd` output)
+
+ 1.   `vi /etc/ssh/sshd_config`  (this is optional; if you have `PrintMotd yes`, then you'll get the static motd as well as the `dynmotd` output)
+      ```
       PrintMotd no
+      ```
 
- 2.   vi /etc/pam.d/login  (if applicable)
+ 2.   `vi /etc/pam.d/login`  (if applicable)
+      ```
       # session optional pam_motd.so
+      ```
 
- 3.   vi /etc/profile.d/dynmotd.sh (mode: 0644)
+ 3.   `vi /etc/profile.d/dynmotd.sh` (mode: 0644)
+      ```
       /usr/local/bin/dynmotd
+      ```
 
- 4.   Then of course drop this file in:
-      /usr/local/bin/
+ 4.   Then of course drop this file in: `/usr/local/bin/`
 
- 5.   Create an optional folder (default: /etc/dynmotd.d) in which you can place custom scripts for checking additional items (file system, services, ports, etc. -- this is optional)
-```
+ 5.   Create an optional folder (default: `/etc/dynmotd.d`) in which you can place custom scripts for checking additional items (file system, services, ports, etc. -- this is optional)
+
 
 
 ## Sample outputs:
+
+```
+==============================================================================
+ -- Hostname (IPv4)   :  myhostname (12.34.56.78) 
+ -- Model             :  Raspberry Pi 4 Model B Rev 1.4 
+ -- OS                :  Rocky Linux release 8.4 (Green Obsidian) 
+ -- Kernel            :  5.10.52-v8.1.el8 
+ -- Shell             :  bash 4.4.20 
+ -- Users             :  Currently 1 user(s) logged on 
+ -- CPUs              :  4 x ARM/Cortex-A72 
+ -- Load average      :  0.00 - 0.00 - 0.00 (1-5-15 min) 
+ -- Memory            :  7,8G - 172M - 7,2G (total-used-free) 
+ -- Swap              :  487M - 0B - 487M (total-used-free) 
+ -- Processes         :  120 running - 0 zombies 
+ -- Packages          :  505 installed 
+ -- Usage on /        :  117GB - 5,3GB (5%) - 112GB (total-used-free) 
+ -- System uptime     :  1 days 21 hours 41 minutes 19 seconds 
+ -- Cockpit           :  Web console: https://myhostname:9090/ or https://12.34.56.78:9090/ 
+==============================================================================
+```
 
 ```
 ==============================================================================

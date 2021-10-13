@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# has: Check if $1 installed.
+has() { 
+	type -p "$1" >/dev/null 
+}
+
 HOSTNAME=$(hostname -s)
 IP=$(hostname -I | awk '{print $1}')
 
@@ -23,11 +28,11 @@ else
 fi
 
 
-CPU_COUNT=$(lscpu | grep ^'CPU(s)' | awk -F ': ' {'print $2'} | xargs)
-CPU_VENDOR=$(lscpu | grep ^'Vendor ID' | awk -F ': ' {'print $2'} | xargs)
-CPU_MODEL=$(lscpu | grep ^'Model name' | awk -F ': ' {'print $2'} | xargs)
-MEMORY=$(free -h | grep "Mem" | awk '{print $2,"-",$3,"-",$4}')
-SWAP=$(free -h | grep "Swap" | awk '{print $2,"-",$3,"-",$4}')
+CPU_COUNT=$(LANG=en.UTF-8 lscpu | grep ^'CPU(s)' | awk -F ': ' '{print $2}' | xargs)
+CPU_VENDOR=$(LANG=en.UTF-8 lscpu | grep ^'Vendor ID' | awk -F ': ' '{print $2}' | xargs)
+CPU_MODEL=$(LANG=en.UTF-8 lscpu | grep ^'Model name' | awk -F ': ' '{print $2}' | xargs)
+MEMORY=$(free -h --giga | grep "Mem" | awk '{print $2,"-",$3,"-",$4}')
+SWAP=$(free -h --giga | grep "Swap" | awk '{print $2,"-",$3,"-",$4}')
 PSA=$(ps -Afl | wc -l)
 ZOMBIE=$(pgrep defunct | wc -l)
 
@@ -43,32 +48,100 @@ upHours=$((uptime/60/60%24))
 upMins=$((uptime/60%60))
 upSecs=$((uptime%60))
 
+shell="${SHELL##*/} "
+case ${shell_name:=${SHELL##*/}} in
+	bash)
+		[[ $BASH_VERSION ]] ||
+			BASH_VERSION=$("$SHELL" -c "printf %s \"\$BASH_VERSION\"")
+
+		shell+=${BASH_VERSION/-*}
+	;;
+
+	sh|ash|dash|es) ;;
+
+	*ksh)
+		shell+=$("$SHELL" -c "printf %s \"\$KSH_VERSION\"")
+		shell=${shell/ * KSH}
+		shell=${shell/version}
+	;;
+
+	osh)
+		if [[ $OIL_VERSION ]]; then
+			shell+=$OIL_VERSION
+		else
+			shell+=$("$SHELL" -c "printf %s \"\$OIL_VERSION\"")
+		fi
+	;;
+
+	tcsh)
+		shell+=$("$SHELL" -c "printf %s \$tcsh")
+	;;
+
+	yash)
+		shell+=$("$SHELL" --version 2>&1)
+		shell=${shell/ $shell_name}
+		shell=${shell/ Yet another shell}
+		shell=${shell/Copyright*}
+	;;
+
+	*)
+		shell+=$("$SHELL" --version 2>&1)
+		shell=${shell/ $shell_name}
+	;;
+esac
+
+# Remove unwanted info.
+shell=${shell/, version}
+shell=${shell/xonsh\//xonsh }
+shell=${shell/options*}
+shell=${shell/\(*\)}
+
+if [[ -d /system/app/ && -d /system/priv-app ]]; then
+	model="$(getprop ro.product.brand) $(getprop ro.product.model)"
+elif [[ -f /sys/devices/virtual/dmi/id/product_name ||
+		-f /sys/devices/virtual/dmi/id/product_version ]]; then
+	model=$(< /sys/devices/virtual/dmi/id/product_name)
+	model+=" $(< /sys/devices/virtual/dmi/id/product_version)"
+elif [[ -f /sys/firmware/devicetree/base/model ]]; then
+	{ IFS= read -rd '' model </sys/firmware/devicetree/base/model;} 2>/dev/null
+elif [[ -f /tmp/sysinfo/model ]]; then
+	model=$(< /tmp/sysinfo/model)
+fi
+
+has "dpkg" >/dev/null && packages="$(dpkg-query -f '.\n' -W | wc -l)"
+has "dnf" >/dev/null && packages="$(sqlite3 /var/cache/dnf/packages.db "SELECT count(pkg) FROM installed")"
+
+ROOT_LV=$(df -Ph | grep "/$" | awk '{ printf "%sB - %sB (%s) - %sB (total-used-free)",$2,$3,$5,$4; }')
 
 #Additional checks can be placed in this directory on the server
 CUSTOM_CHECKS_DIR='/etc/dynmotd.d'
 
 #---------------------------------------------------------------------------#
 
-COLOR_COLUMN="\e[1m-"
-COLOR_VALUE="\e[31m"
+COLOR_COLUMN="\e[34m-"
+COLOR_VALUE="\e[37m"
 RESET_COLORS="\e[0m"
 
 echo -e "
 ==============================================================================
- ${COLOR_COLUMN}- Hostname${RESET_COLORS}...........: ${COLOR_VALUE} ${HOSTNAME} (${IP}) ${RESET_COLORS}
- ${COLOR_COLUMN}- OS version${RESET_COLORS}.........: ${COLOR_VALUE} ${OS_VERSION} ${RESET_COLORS}
- ${COLOR_COLUMN}- Kernel release${RESET_COLORS}.....: ${COLOR_VALUE} ${KERNEL} ${RESET_COLORS}
- ${COLOR_COLUMN}- Users${RESET_COLORS}..............: ${COLOR_VALUE} Currently $(users | wc -w) user(s) logged on ${RESET_COLORS}
-==============================================================================
- ${COLOR_COLUMN}- CPUs${RESET_COLORS}...............: ${COLOR_VALUE} ${CPU_COUNT} x ${CPU_VENDOR}/${CPU_MODEL} ${RESET_COLORS}
- ${COLOR_COLUMN}- Load average${RESET_COLORS}.......: ${COLOR_VALUE} ${LOAD1} - ${LOAD5} - ${LOAD15} (1-5-15 min) ${RESET_COLORS}
- ${COLOR_COLUMN}- Memory${RESET_COLORS}.............: ${COLOR_VALUE} ${MEMORY} (total-used-free) ${RESET_COLORS}
- ${COLOR_COLUMN}- Swap${RESET_COLORS}...............: ${COLOR_VALUE} ${SWAP} (total-used-free) ${RESET_COLORS}
- ${COLOR_COLUMN}- Processes${RESET_COLORS}..........: ${COLOR_VALUE} ${PSA} running - ${ZOMBIE} zombies ${RESET_COLORS}
- ${COLOR_COLUMN}- System uptime${RESET_COLORS}......: ${COLOR_VALUE} ${upDays} days ${upHours} hours ${upMins} minutes ${upSecs} seconds ${RESET_COLORS}"
+ ${COLOR_COLUMN}- Hostname (IPv4)${RESET_COLORS}   : ${COLOR_VALUE} ${HOSTNAME} (${IP}) ${RESET_COLORS}
+ ${COLOR_COLUMN}- Model${RESET_COLORS}             : ${COLOR_VALUE} ${model} ${RESET_COLORS}
+ ${COLOR_COLUMN}- OS ${RESET_COLORS}               : ${COLOR_VALUE} ${OS_VERSION} ${RESET_COLORS}
+ ${COLOR_COLUMN}- Kernel${RESET_COLORS}            : ${COLOR_VALUE} ${KERNEL} ${RESET_COLORS}
+ ${COLOR_COLUMN}- Shell${RESET_COLORS}             : ${COLOR_VALUE} ${shell} ${RESET_COLORS}
+ ${COLOR_COLUMN}- Users${RESET_COLORS}             : ${COLOR_VALUE} Currently $(users | wc -w) user(s) logged on ${RESET_COLORS}
+ ${COLOR_COLUMN}- CPUs${RESET_COLORS}              : ${COLOR_VALUE} ${CPU_COUNT} x ${CPU_VENDOR}/${CPU_MODEL} ${RESET_COLORS}
+ ${COLOR_COLUMN}- Load average${RESET_COLORS}      : ${COLOR_VALUE} ${LOAD1} - ${LOAD5} - ${LOAD15} (1-5-15 min) ${RESET_COLORS}
+ ${COLOR_COLUMN}- Memory${RESET_COLORS}            : ${COLOR_VALUE} ${MEMORY} (total-used-free) ${RESET_COLORS}
+ ${COLOR_COLUMN}- Swap${RESET_COLORS}              : ${COLOR_VALUE} ${SWAP} (total-used-free) ${RESET_COLORS}
+ ${COLOR_COLUMN}- Processes${RESET_COLORS}         : ${COLOR_VALUE} ${PSA} running - ${ZOMBIE} zombies ${RESET_COLORS}
+ ${COLOR_COLUMN}- Packages${RESET_COLORS}          : ${COLOR_VALUE} ${packages} installed ${RESET_COLORS}
+ ${COLOR_COLUMN}- Usage on /${RESET_COLORS}        : ${COLOR_VALUE} ${ROOT_LV} $RESET_COLORS
+ ${COLOR_COLUMN}- System uptime${RESET_COLORS}     : ${COLOR_VALUE} ${upDays} days ${upHours} hours ${upMins} minutes ${upSecs} seconds ${RESET_COLORS}"
 
-if [ -d ${CUSTOM_CHECKS_DIR} ] && [ ! -z "$(ls -A ${CUSTOM_CHECKS_DIR})" ]; then
+if [ -d ${CUSTOM_CHECKS_DIR} ] && [ -n "$(ls -A ${CUSTOM_CHECKS_DIR})" ]; then
     for i in "${CUSTOM_CHECKS_DIR}"/*.sh; do
+		# shellcheck disable=SC1090
         . "${i}"
     done
 fi

@@ -1,3 +1,4 @@
+#!/bin/env bash
 # with services, the command can be very simple or a bit more complicated depending on how much information you want to get out of it
 # the output of the command below would be something like:
 # active (running) since Fri 2018-08-03 09:37:39 CDT
