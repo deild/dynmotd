@@ -1,6 +1,7 @@
+#!/bin/env bash
 # the "tr" command is to suppress the "warning: command substitution: ignored null byte in input" errors
 # https://askubuntu.com/questions/926626/how-do-i-fix-warning-command-substitution-ignored-null-byte-in-input
-PI_REVISION=$(cat /proc/device-tree/model | tr '\0' '\n')
+PI_REVISION=$(< /proc/device-tree/model tr '\0' '\n')
 PI_TEMP=$(vcgencmd measure_temp | awk -F'=' '{ print $2 }')
 
 echo -e "===== PI INFO ================================================================
