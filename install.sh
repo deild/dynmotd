@@ -1,6 +1,18 @@
 #! /bin/bash
 set +x
 
+needs_commands="curl awk xargs basename tr grep lscpu free ps pgrep cut uptime df"
+for cmd in $needs_commands
+do
+	if ! type -p "$cmd" > /dev/null
+	then
+		printf "%-30s \n" "Command not found: $cmd"
+		command_not_found=true
+	fi
+done
+
+[[ -z $command_not_found ]] || exit 2
+
 echo '+ starting install'
 DYNMOTD_BIN_PATH='/usr/local/bin'
 DYNMOTD_CUSTOM_SCRIPTS_PATH='/etc/dynmotd.d'
