@@ -108,6 +108,7 @@ has "dnf" >/dev/null && packages="$(sqlite3 /var/cache/dnf/packages.db "SELECT c
 
 ROOT_LV=$(df -Ph | grep "/$" | awk '{ printf "%sB - %sB (%s) - %sB (total-used-free)",$2,$3,$5,$4; }')
 
+BOOT_TIME=$(systemd-analyze | awk '{print $NF;exit}')
 #Additional checks can be placed in this directory on the server
 CUSTOM_CHECKS_DIR='/etc/dynmotd.d'
 
@@ -132,6 +133,7 @@ echo -e "
  ${COLOR_COLUMN}- Processes${RESET_COLORS}         : ${COLOR_VALUE} ${PSA} running - ${ZOMBIE} zombies ${RESET_COLORS}
  ${COLOR_COLUMN}- Packages${RESET_COLORS}          : ${COLOR_VALUE} ${packages} installed ${RESET_COLORS}
  ${COLOR_COLUMN}- Usage on /${RESET_COLORS}        : ${COLOR_VALUE} ${ROOT_LV} $RESET_COLORS
+ ${COLOR_COLUMN}- Boot duration${RESET_COLORS}     : ${COLOR_VALUE} ${BOOT_TIME} $RESET_COLORS
  ${COLOR_COLUMN}- System uptime${RESET_COLORS}     : ${COLOR_VALUE} ${upDays} days ${upHours} hours ${upMins} minutes ${upSecs} seconds ${RESET_COLORS}"
 
 if [ -d ${CUSTOM_CHECKS_DIR} ] && [ -n "$(ls -A ${CUSTOM_CHECKS_DIR})" ]; then
