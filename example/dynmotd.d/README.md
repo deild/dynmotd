@@ -3,7 +3,7 @@
 Please pay attention to how the output is formatted.  In particular the `"` that is at the end of your last output line:
 
 
-```
+```sh
 #file systems
 ROOT_LV=$(df -Ph | grep "/$" | awk '{print $4,"-",$5}' | tr -d '\n')
 OPT_LV=$(df -Ph | grep "/opt$" | awk '{print $4,"-",$5}' | tr -d '\n')

@@ -63,5 +63,7 @@ if [ -f /run/cockpit/motd ]; then
 	cp ./example/dynmotd.d/99_cockpit.sh ${DYNMOTD_CUSTOM_SCRIPTS_PATH}/.
 fi
 
+cp ./example/dynmotd.d/12_temperature.sh ${DYNMOTD_CUSTOM_SCRIPTS_PATH}/.
+
 echo '+ install complete!'
 ${DYNMOTD_BIN_PATH}/dynmotd

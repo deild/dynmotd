@@ -22,24 +22,20 @@ You can run the `install.sh` script as root/with sudo or if you prefer manually:
 
 
  1.   `vi /etc/ssh/sshd_config`  (this is optional; if you have `PrintMotd yes`, then you'll get the static motd as well as the `dynmotd` output)
-      ```
+ ```
       PrintMotd no
-      ```
-
+ ```
  2.   `vi /etc/pam.d/login`  (if applicable)
-      ```
+ ```
       # session optional pam_motd.so
-      ```
-
+ ```
  3.   `vi /etc/profile.d/dynmotd.sh` (mode: 0644)
-      ```
+ ```sh
       /usr/local/bin/dynmotd
-      ```
-
+ ```
  4.   Then of course drop this file in: `/usr/local/bin/`
 
  5.   Create an optional folder (default: `/etc/dynmotd.d`) in which you can place custom scripts for checking additional items (file system, services, ports, etc. -- this is optional)
-
 
 
 ## Sample outputs:
